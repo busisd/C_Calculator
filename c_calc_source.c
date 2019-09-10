@@ -2,6 +2,10 @@
 #include <SDL.h>
 #include <SDL_ttf.h>
 
+void handle_number();
+
+SDL_Rect center_rect();
+
 const int SCREEN_HEIGHT = 600;
 const int SCREEN_WIDTH = 500;
 const char button_text_vals[20][3] = {
@@ -51,11 +55,11 @@ int main(int argc, char* args[]) {
 		const int button_rows = 5;
 		SDL_Rect number_rects[20];
 		SDL_Rect number_text_rects[20];
-		float top_bound = SCREEN_HEIGHT * 0.4;
+		float top_bound = SCREEN_HEIGHT * 0.3;
 		float bottom_bound = SCREEN_HEIGHT * 1.0;
 		float padding = 5;
 
-		TTF_Font* calc_font = TTF_OpenFont("./Font_Files/Roboto-Black.ttf", 24);
+		TTF_Font* calc_font = TTF_OpenFont("./Font_Files/Roboto-Black.ttf", 32);
 		if (calc_font == NULL) {
 			printf("Font not found!\n");
 		}
@@ -72,11 +76,10 @@ int main(int argc, char* args[]) {
 				number_rects[i+j*button_cols] = new_square;
 				SDL_FillRect(calc_surface, &number_rects[i+j*button_cols], color_key_up);
 
-				SDL_Rect new_text_square = { new_x, new_y, new_width, new_height };
-				number_text_rects[i + j * button_cols] = new_text_square;
-				if (!(text_message_surfaces[i + j * button_cols] = TTF_RenderText_Solid(calc_font, button_text_vals[i + j * button_cols], text_color))) {
+				if (!(text_message_surfaces[i + j * button_cols] = TTF_RenderText_Blended(calc_font, button_text_vals[i + j * button_cols], text_color))) {
 					printf("Message surface could not be created! Error: %s\n", TTF_GetError());
 				}
+				number_text_rects[i + j * button_cols] = center_rect(new_square, text_message_surfaces[i + j * button_cols]->w, text_message_surfaces[i + j * button_cols]->h);
 				SDL_BlitSurface(text_message_surfaces[i + j * button_cols], NULL, calc_surface, &number_text_rects[i + j * button_cols]);
 			}
 		}
@@ -90,13 +93,10 @@ int main(int argc, char* args[]) {
 					exit_flag = SDL_TRUE;
 				}
 				if (e.type == SDL_MOUSEBUTTONDOWN) {
-					//SDL_FillRect(calc_surface, &rect_test, SDL_MapRGB(calc_surface->format, 30, 30, 60));
-
 					int x = e.button.x, y = e.button.y;
 					SDL_Point cur_mouse_pos = { x, y };
 
 					for (int i = 0; i < 20; i++) {
-						//printf("%d", SDL_PointInRect(&cur_mouse_pos, &number_rects[i]) ? 1 : 0);
 						if (SDL_PointInRect(&cur_mouse_pos, &number_rects[i])) {
 							SDL_FillRect(calc_surface, &number_rects[i], color_key_pressed);
 							cur_pressed_button_num = i;
@@ -107,19 +107,13 @@ int main(int argc, char* args[]) {
 					SDL_UpdateWindowSurface(calc_window);
 				}
 				if (e.type == SDL_MOUSEBUTTONUP) {
-					//int x, y;
-					//SDL_GetMouseState(&x, &y);
 					int x = e.button.x, y = e.button.y;
 					SDL_Point cur_mouse_pos = { x, y };
 					
-					//for (int i = 0; i < 20; i++) {
-					//	SDL_FillRect(calc_surface, &number_rects[i], color_key_up);
-					//}
-
 					if (cur_pressed_button_num > -1) {
 						SDL_FillRect(calc_surface, &number_rects[cur_pressed_button_num], color_key_up);
 						if (SDL_PointInRect(&cur_mouse_pos, &number_rects[cur_pressed_button_num])) {
-							printf("Number entered: %d\n", cur_pressed_button_num);
+							handle_number(cur_pressed_button_num);
 						}
 						SDL_BlitSurface(text_message_surfaces[cur_pressed_button_num], NULL, calc_surface, &number_text_rects[cur_pressed_button_num]);
 					}
@@ -142,4 +136,19 @@ int main(int argc, char* args[]) {
 	SDL_Quit();
 
 	return 0;
+}
+
+
+int cur_num_input[10];
+int cur_num_input_len;
+void handle_number(int new_button) {
+
+	printf("Number entered: %d\n", new_button);
+}
+
+SDL_Rect center_rect(SDL_Rect outer_rect, int message_width, int message_height) {
+	int new_x = (int)(outer_rect.x + outer_rect.w / 2 - message_width / 2);
+	int new_y = (int)(outer_rect.y + outer_rect.h / 2 - message_height / 2);
+	SDL_Rect centered_rect = {new_x, new_y, message_width, message_height};
+	return centered_rect;
 }
