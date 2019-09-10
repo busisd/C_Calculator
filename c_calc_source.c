@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <SDL.h>
 #include <SDL_ttf.h>
+#include <string.h>
 
 void handle_number();
 
@@ -138,12 +139,69 @@ int main(int argc, char* args[]) {
 	return 0;
 }
 
+int char_to_int(char *char_array[]) {
+	if (char_array[0] == '\0') {
+		return 0;
+	}
+	else {
+		int num_int;
+		sscanf_s(char_array, "%d", &num_int);
+		return num_int;
+	}
+}
 
-int cur_num_input[10];
-int cur_num_input_len;
-void handle_number(int new_button) {
+char prev_num[10];
+char cur_num[10];
+int cur_num_len = 0;
+void handle_number(int new_input) {
+	switch (new_input) {
+	case 17:
+	case 12:
+	case 13:
+	case 14:
+	case 8:
+	case 9:
+	case 10:
+	case 4:
+	case 5:
+	case 6:
+		if (cur_num_len < 10) {
+			cur_num[cur_num_len] = button_text_vals[new_input][0];
+			cur_num_len++;
+		}
+		break;
+	
+	case 1:
+		memset(prev_num, 0, sizeof(prev_num));
+	case 0:
+		memset(cur_num, 0, sizeof(cur_num));
+		cur_num_len = 0;
+		break;
 
-	printf("Number entered: %d\n", new_button);
+	case 3:
+	case 7:
+	case 11:
+	case 15:
+	case 19:
+		{
+			int cur_num_int = char_to_int(cur_num);
+			int prev_num_int = char_to_int(prev_num);
+			int operator_result = cur_num_int + prev_num_int;
+
+			if (operator_result < 10000000000) {
+				sprintf_s(prev_num, sizeof(prev_num)+1, "%d", operator_result);
+			}
+			else {
+				memset(prev_num, 0, sizeof(prev_num));
+			}
+
+			memset(cur_num, 0, sizeof(cur_num));
+			cur_num_len = 0;
+			break;
+		}
+	}
+	printf("Previous number: %s;   Number entered: %s\n", prev_num, cur_num);
+	//printf("Button pressed: %d\n", new_input);
 }
 
 SDL_Rect center_rect(SDL_Rect outer_rect, int message_width, int message_height) {
