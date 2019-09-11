@@ -150,9 +150,28 @@ int char_to_int(char *char_array[]) {
 	}
 }
 
+int perform_op(int num1, int num2, int operator) {
+	switch (operator) {
+	case 3:
+		return num2 / num1;
+	case 7:
+		return num2 * num1;
+	case 11:
+		return num2 - num1;
+	case 15:
+		return num2 + num1;
+	default:
+		return num1;
+	}
+}
+
+
+void update_nums(int new_input);
+
 char prev_num[10];
 char cur_num[10];
 int cur_num_len = 0;
+int prev_op = 15;
 void handle_number(int new_input) {
 	switch (new_input) {
 	case 17:
@@ -179,29 +198,43 @@ void handle_number(int new_input) {
 		break;
 
 	case 3:
+		update_nums(prev_op);
+		prev_op = 3;
+		break;
 	case 7:
+		update_nums(prev_op);
+		prev_op = 7;
+		break;
 	case 11:
+		update_nums(prev_op);
+		prev_op = 11;
+		break;
 	case 15:
+		update_nums(prev_op);
+		prev_op = 19;
+		break;
 	case 19:
-		{
-			int cur_num_int = char_to_int(cur_num);
-			int prev_num_int = char_to_int(prev_num);
-			int operator_result = cur_num_int + prev_num_int;
-
-			if (operator_result < 10000000000) {
-				sprintf_s(prev_num, sizeof(prev_num)+1, "%d", operator_result);
-			}
-			else {
-				memset(prev_num, 0, sizeof(prev_num));
-			}
-
-			memset(cur_num, 0, sizeof(cur_num));
-			cur_num_len = 0;
-			break;
-		}
+		update_nums(prev_op);
+		break;
 	}
-	printf("Previous number: %s;   Number entered: %s\n", prev_num, cur_num);
+	printf("Previous number: %s;   Number entered: %s   Prev op: %d\n", prev_num, cur_num, prev_op);
 	//printf("Button pressed: %d\n", new_input);
+}
+
+void update_nums(int new_input) {
+	int cur_num_int = char_to_int(cur_num);
+	int prev_num_int = char_to_int(prev_num);
+	int operator_result = perform_op(cur_num_int, prev_num_int, prev_op);
+
+	if (operator_result < 10000000000) {
+		sprintf_s(prev_num, sizeof(prev_num) + 1, "%d", operator_result);
+	}
+	else {
+		memset(prev_num, 0, sizeof(prev_num));
+	}
+
+	memset(cur_num, 0, sizeof(cur_num));
+	cur_num_len = 0;
 }
 
 SDL_Rect center_rect(SDL_Rect outer_rect, int message_width, int message_height) {
@@ -210,3 +243,4 @@ SDL_Rect center_rect(SDL_Rect outer_rect, int message_width, int message_height)
 	SDL_Rect centered_rect = {new_x, new_y, message_width, message_height};
 	return centered_rect;
 }
+
