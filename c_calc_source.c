@@ -17,6 +17,7 @@ const char button_text_vals[20][3] = {
 	"±", "0", ".", "=",
 };
 
+SDL_Color text_color = { 0,0,0 };
 int main(int argc, char* args[]) {	
 	SDL_Event e;
 	SDL_Window* calc_window = NULL;
@@ -64,7 +65,6 @@ int main(int argc, char* args[]) {
 		if (calc_font == NULL) {
 			printf("Font not found!\n");
 		}
-		SDL_Color text_color = { 0,0,0 };
 		
 		for (int i = 0; i < button_cols; i++) {
 			for (int j = 0; j < button_rows; j++) {
@@ -85,7 +85,6 @@ int main(int argc, char* args[]) {
 			}
 		}
 
-		TTF_CloseFont(calc_font);
 		SDL_UpdateWindowSurface(calc_window);
 
 		while (!exit_flag) {
@@ -114,7 +113,7 @@ int main(int argc, char* args[]) {
 					if (cur_pressed_button_num > -1) {
 						SDL_FillRect(calc_surface, &number_rects[cur_pressed_button_num], color_key_up);
 						if (SDL_PointInRect(&cur_mouse_pos, &number_rects[cur_pressed_button_num])) {
-							handle_number(cur_pressed_button_num);
+							handle_number(cur_pressed_button_num, calc_window, calc_surface, calc_font);
 						}
 						SDL_BlitSurface(text_message_surfaces[cur_pressed_button_num], NULL, calc_surface, &number_text_rects[cur_pressed_button_num]);
 					}
@@ -124,6 +123,8 @@ int main(int argc, char* args[]) {
 
 			}
 		}
+
+		TTF_CloseFont(calc_font);
 	}
 
 	for (int i = 0; i < 20; i++){
@@ -165,14 +166,22 @@ int perform_op(int num1, int num2, int operator) {
 	}
 }
 
+double add_digit(double number, int new_digit) {
+	if (number >= 0) {
+		return number * 10 + new_digit;
+	}
+	else {
+		return number * 10 - new_digit;
+	}
+}
 
 void update_nums(int new_input);
+void display_numbers(double prev_num, double cur_num, int cur_op, SDL_Window* calc_window, SDL_Surface* calc_surface, TTF_Font* calc_font);
 
-char prev_num[10];
-char cur_num[10];
-int cur_num_len = 0;
-int prev_op = 15;
-void handle_number(int new_input) {
+double prev_num = 0;
+double cur_num = 0;
+int cur_op = 0;
+void handle_number(int new_input, SDL_Window* calc_window, SDL_Surface* calc_surface, TTF_Font* calc_font) {
 	switch (new_input) {
 	case 17:
 	case 12:
@@ -184,57 +193,40 @@ void handle_number(int new_input) {
 	case 4:
 	case 5:
 	case 6:
-		if (cur_num_len < 10) {
-			cur_num[cur_num_len] = button_text_vals[new_input][0];
-			cur_num_len++;
-		}
+		cur_num = add_digit(cur_num, button_text_vals[new_input][0] - '0');
 		break;
 	
+	case 16:
+		cur_num = cur_num * (-1);
+		break;
+
 	case 1:
-		memset(prev_num, 0, sizeof(prev_num));
+		prev_num = 0;
 	case 0:
-		memset(cur_num, 0, sizeof(cur_num));
-		cur_num_len = 0;
+		cur_num = 0;
 		break;
 
 	case 3:
-		update_nums(prev_op);
-		prev_op = 3;
+		cur_op = 3;
 		break;
 	case 7:
-		update_nums(prev_op);
-		prev_op = 7;
+		cur_op = 7;
 		break;
 	case 11:
-		update_nums(prev_op);
-		prev_op = 11;
+		cur_op = 11;
 		break;
 	case 15:
-		update_nums(prev_op);
-		prev_op = 19;
+		cur_op = 15;
 		break;
 	case 19:
-		update_nums(prev_op);
+		prev_num = perform_op(cur_num, prev_num, cur_op);
+		cur_num = 0;
+		cur_op = 0;
 		break;
 	}
-	printf("Previous number: %s;   Number entered: %s   Prev op: %d\n", prev_num, cur_num, prev_op);
+	printf("Previous number: %lf;   Number entered: %lf;   Cur op: %s\n", prev_num, cur_num, button_text_vals[cur_op]);
+	display_numbers(prev_num, cur_num, cur_op, calc_window, calc_surface, calc_font);
 	//printf("Button pressed: %d\n", new_input);
-}
-
-void update_nums(int new_input) {
-	int cur_num_int = char_to_int(cur_num);
-	int prev_num_int = char_to_int(prev_num);
-	int operator_result = perform_op(cur_num_int, prev_num_int, prev_op);
-
-	if (operator_result < 10000000000) {
-		sprintf_s(prev_num, sizeof(prev_num) + 1, "%d", operator_result);
-	}
-	else {
-		memset(prev_num, 0, sizeof(prev_num));
-	}
-
-	memset(cur_num, 0, sizeof(cur_num));
-	cur_num_len = 0;
 }
 
 SDL_Rect center_rect(SDL_Rect outer_rect, int message_width, int message_height) {
@@ -244,3 +236,32 @@ SDL_Rect center_rect(SDL_Rect outer_rect, int message_width, int message_height)
 	return centered_rect;
 }
 
+char* prev_num_string[100], cur_num_string[100];
+SDL_Surface *prev_num_surface, *cur_num_surface, *op_surface;
+const SDL_Rect clear_area_rect = { 0, 0, 500, 180 };
+SDL_Rect prev_num_rect = { 10, 10, 10, 10 }, cur_num_rect = { 10, 50, 10, 10 }, op_rect = { 460, 10, 10, 10 };
+void display_numbers(double prev_num, double cur_num, int cur_op, SDL_Window *calc_window, SDL_Surface *calc_surface, TTF_Font *calc_font) {
+	SDL_Color bg_color = { 210, 210, 240 };
+	Uint32 color_bg = SDL_MapRGB(calc_surface->format, 210, 210, 240);
+	SDL_FillRect(calc_surface, &clear_area_rect, color_bg);
+	snprintf(prev_num_string, sizeof(prev_num_string), "%f", prev_num);
+	snprintf(cur_num_string, sizeof(cur_num_string), "%f", cur_num);
+	prev_num_surface = TTF_RenderText_Shaded(calc_font, prev_num_string, text_color, bg_color);
+	SDL_BlitSurface(prev_num_surface, NULL, calc_surface, &prev_num_rect);
+	cur_num_surface = TTF_RenderText_Shaded(calc_font, cur_num_string, text_color, bg_color);
+	SDL_BlitSurface(cur_num_surface, NULL, calc_surface, &cur_num_rect);
+	if (cur_op != 0) {
+		op_surface = TTF_RenderText_Shaded(calc_font, button_text_vals[cur_op], text_color, bg_color);
+		SDL_BlitSurface(op_surface, NULL, calc_surface, &op_rect);
+	}
+	SDL_UpdateWindowSurface(calc_window);
+}
+
+/*
+TODO:
+clean up a bit! (especially display_numbers)
+improve calvulator behavior!
+improve color scheme?
+add keyboard commands
+
+*/
