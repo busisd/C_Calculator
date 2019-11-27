@@ -77,10 +77,15 @@ int main(int argc, char* args[]) {
 				number_rects[i+j*button_cols] = new_square;
 				SDL_FillRect(calc_surface, &number_rects[i+j*button_cols], color_key_up);
 
-				if (!(text_message_surfaces[i + j * button_cols] = TTF_RenderText_Blended(calc_font, button_text_vals[i + j * button_cols], text_color))) {
+				text_message_surfaces[i + j * button_cols] = TTF_RenderText_Blended(calc_font, button_text_vals[i + j * button_cols], text_color);
+				if (!(text_message_surfaces[i + j * button_cols])) {
 					printf("Message surface could not be created! Error: %s\n", TTF_GetError());
 				}
-				number_text_rects[i + j * button_cols] = center_rect(new_square, text_message_surfaces[i + j * button_cols]->w, text_message_surfaces[i + j * button_cols]->h);
+
+				int cur_surface_width = text_message_surfaces[i + j * button_cols]->w;
+				int cur_surface_height = text_message_surfaces[i + j * button_cols]->h;
+
+				number_text_rects[i + j * button_cols] = center_rect(new_square, cur_surface_width, cur_surface_height);
 				SDL_BlitSurface(text_message_surfaces[i + j * button_cols], NULL, calc_surface, &number_text_rects[i + j * button_cols]);
 			}
 		}
@@ -151,7 +156,7 @@ int char_to_int(char *char_array[]) {
 	}
 }
 
-int perform_op(int num1, int num2, int operator) {
+double perform_op(double num1, double num2, int operator) {
 	switch (operator) {
 	case 3:
 		return num2 / num1;
@@ -241,6 +246,10 @@ SDL_Surface *prev_num_surface, *cur_num_surface, *op_surface;
 const SDL_Rect clear_area_rect = { 0, 0, 500, 180 };
 SDL_Rect prev_num_rect = { 10, 10, 10, 10 }, cur_num_rect = { 10, 50, 10, 10 }, op_rect = { 460, 10, 10, 10 };
 void display_numbers(double prev_num, double cur_num, int cur_op, SDL_Window *calc_window, SDL_Surface *calc_surface, TTF_Font *calc_font) {
+
+	SDL_FreeSurface(prev_num_surface);
+	SDL_FreeSurface(cur_num_surface);
+
 	SDL_Color bg_color = { 210, 210, 240 };
 	Uint32 color_bg = SDL_MapRGB(calc_surface->format, 210, 210, 240);
 	SDL_FillRect(calc_surface, &clear_area_rect, color_bg);
@@ -251,6 +260,7 @@ void display_numbers(double prev_num, double cur_num, int cur_op, SDL_Window *ca
 	cur_num_surface = TTF_RenderText_Shaded(calc_font, cur_num_string, text_color, bg_color);
 	SDL_BlitSurface(cur_num_surface, NULL, calc_surface, &cur_num_rect);
 	if (cur_op != 0) {
+		SDL_FreeSurface(op_surface);
 		op_surface = TTF_RenderText_Shaded(calc_font, button_text_vals[cur_op], text_color, bg_color);
 		SDL_BlitSurface(op_surface, NULL, calc_surface, &op_rect);
 	}
@@ -263,5 +273,6 @@ clean up a bit! (especially display_numbers)
 improve calvulator behavior!
 improve color scheme?
 add keyboard commands
+add method docs
 
 */

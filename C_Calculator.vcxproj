@@ -73,6 +73,10 @@
     <IncludePath>d:\Users\Kids\Documents\C Practice\C Dirs\SDL2_ttf-2.0.15\include;d:\Users\Kids\Documents\C Practice\C Dirs\SDL2-2.0.10\include;$(IncludePath)</IncludePath>
     <LibraryPath>d:\Users\Kids\Documents\C Practice\C Dirs\SDL2_ttf-2.0.15\lib\x86;d:\Users\Kids\Documents\C Practice\C Dirs\SDL2-2.0.10\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>D:\Users\Kids\Documents\C Practice\C Dirs\SDL2_ttf-2.0.15\include;D:\Users\Kids\Documents\C Practice\C Dirs\SDL2-2.0.10\include;$(IncludePath)</IncludePath>
+    <LibraryPath>D:\Users\Kids\Documents\C Practice\C Dirs\SDL2_ttf-2.0.15\lib\x86;D:\Users\Kids\Documents\C Practice\C Dirs\SDL2-2.0.10\lib\x86;$(LibraryPath)</LibraryPath>
+  </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
@@ -94,6 +98,7 @@
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
